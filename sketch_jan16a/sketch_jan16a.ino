@@ -1,4 +1,7 @@
-unsigned char LEDs[128];
+volatile unsigned char LEDs[128];
+volatile bool sel;
+volatile bool spid;
+#include <SPI.h>
 
 void setup() 
 {   
@@ -26,10 +29,35 @@ void setup()
     }
     delay(1000);
   }
+
+  sel = 0xFF;
+  
+  pinMode(MISO, OUTPUT);
+  SPCR |= _BV(SPE);
+
+  SPI.attachInterrupt();
   
   //Delay output to LEDs for debugging. This gives a ten second window to add new code
   randomSeed(200);
 }
+
+// SPI interrupt routine
+ISR (SPI_STC_vect)
+{
+  byte c = SPDR;  // grab byte from SPI Data Register
+  
+  if (sel != 0xFF)
+  {
+    LEDs[sel] = c;
+    sel = 0xFF;
+  }
+  else
+  {
+    sel = c;
+  }
+  spid = true;
+}
+
 
 void loop() 
 {
@@ -38,6 +66,7 @@ void loop()
   unsigned static char led_signal = 0;
 
   unsigned char t = 0;
+  
   for (unsigned char i = 1; i <= sizeof(LEDs); i++)
   {
     t = i - 1;
@@ -57,15 +86,4 @@ void loop()
   }
   count++;
   
-  if (count == 0)
-  {
-    pass_count++;
-    if ((pass_count & 0x1F) == 0x10)
-    {
-      for (unsigned char i = 1; i <= sizeof(LEDs); i++)
-      {
-        LEDs[i] = random(16);
-      } 
-    } 
-  }
 }
