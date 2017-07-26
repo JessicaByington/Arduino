@@ -1,4 +1,4 @@
-unsigned char LEDs[128];
+unsigned char LEDs[128] = {0};
 unsigned char sel;
 
 #include <SPI.h>
@@ -6,7 +6,7 @@ unsigned char sel;
 void setup()
 {
   DDRD = 0xFF;
-  DDRC = 0x1F;
+  DDRC = 0x3F;
 
   for (unsigned char x = 0; x < 3; x++)
   {
@@ -69,19 +69,19 @@ void loop()
 
   for (unsigned char i = 1; i <= sizeof(LEDs); i++)
   {
-    t = i - 1;
+    t = i - (unsigned char)1;
 
     //Only comparing the first 4 bits of color for brightness
-    if (LEDs[t] > (count & 0x0F))
-      led_signal |= 1 << (t & 0b0111);
+    if (LEDs[t] > (count & (unsigned char)(0x0F)))
+      led_signal |= (unsigned char)(1) << (t & (unsigned char)(0b0111));
 
     if ((i & 0b0111) == 0)
     {
       PORTD = led_signal;
       led_signal = 0;
-      PORTC = (t >> 3);
-      PORTC |= 0x10;
-      PORTC &= 0x0F;
+      PORTC = (unsigned char)(t >> 3);
+      PORTC |= (unsigned char)0x10;
+      PORTC &= (unsigned char)0x0F;
     }
   }
   count++;
